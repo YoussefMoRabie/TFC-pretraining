@@ -38,6 +38,8 @@ parser.add_argument('--device', default='cuda', type=str,
                     help='cpu or cuda')
 parser.add_argument('--home_path', default=home_dir, type=str,
                     help='Project home directory')
+parser.add_argument('--subset', default=True, type=lambda x: (str(x).lower() in ['true', '1', 'yes']),
+                    help='subset for debugging')
 args, unknown = parser.parse_known_args()
 
 with_gpu = torch.cuda.is_available()
@@ -91,7 +93,7 @@ logger.debug("=" * 45)
 # Load datasets
 sourcedata_path = f"../../datasets/{pretrain_dataset}"
 targetdata_path = f"../../datasets/{targetdata}"
-subset = True  # if subset= true, use a subset for debugging.
+subset = args.subset  # if subset= true, use a subset for debugging.
 train_dl, valid_dl, test_dl = data_generator(sourcedata_path, targetdata_path, configs, training_mode, subset = subset)
 logger.debug("Data loaded ...")
 
@@ -104,8 +106,10 @@ temporal_contr_model = None
 
 if training_mode == "fine_tune_test":
     # load saved model of this experiment
-    load_from = os.path.join(os.path.join(logs_save_dir, experiment_description, run_description,
-    f"pre_train_seed_{SEED}_2layertransformer", "saved_models"))
+    pretrain_dir_name = f"pre_train_seed_{SEED}_2layertransformer"
+    if not os.path.exists(os.path.join(logs_save_dir, experiment_description, run_description, pretrain_dir_name)):
+        pretrain_dir_name = "pre_train_seed_42_2layertransformer"
+    load_from = os.path.join(logs_save_dir, experiment_description, run_description, pretrain_dir_name, "saved_models")
     print("The loading file path", load_from)
     chkpoint = torch.load(os.path.join(load_from, "ckp_last.pt"), map_location=device)
     pretrained_dict = chkpoint["model_state_dict"]

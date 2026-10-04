@@ -27,7 +27,7 @@ def Trainer(model,  model_optimizer, classifier, classifier_optimizer, train_dl,
             # Train and validate
             """Train. In fine-tuning, this part is also trained???"""
             train_loss = model_pretrain(model, model_optimizer, criterion, train_dl, config, device, training_mode)
-            logger.debug(f'\nPre-training Epoch : {epoch}', f'Train Loss : {train_loss:.4f}')
+            logger.debug(f'\nPre-training Epoch : {epoch} | Train Loss : {train_loss:.4f}')
 
         os.makedirs(os.path.join(experiment_log_dir, "saved_models"), exist_ok=True)
         chkpoint = {'model_state_dict': model.state_dict()}
@@ -54,18 +54,19 @@ def Trainer(model,  model_optimizer, classifier, classifier_optimizer, train_dl,
             # save best fine-tuning model""
             global arch
             arch = 'sleepedf2eplipsy'
+            finetune_save_dir = os.path.join(experiment_log_dir, 'finetunemodel')
             if len(total_f1) == 0 or F1 > max(total_f1):
                 print('update fine-tuned model')
-                os.makedirs('experiments_logs/finetunemodel/', exist_ok=True)
-                torch.save(model.state_dict(), 'experiments_logs/finetunemodel/' + arch + '_model.pt')
-                torch.save(classifier.state_dict(), 'experiments_logs/finetunemodel/' + arch + '_classifier.pt')
+                os.makedirs(finetune_save_dir, exist_ok=True)
+                torch.save(model.state_dict(), os.path.join(finetune_save_dir, arch + '_model.pt'))
+                torch.save(classifier.state_dict(), os.path.join(finetune_save_dir, arch + '_classifier.pt'))
             total_f1.append(F1)
 
             # evaluate on the test set
             """Testing set"""
             logger.debug('Test on Target datasts test set')
-            model.load_state_dict(torch.load('experiments_logs/finetunemodel/' + arch + '_model.pt'))
-            classifier.load_state_dict(torch.load('experiments_logs/finetunemodel/' + arch + '_classifier.pt'))
+            model.load_state_dict(torch.load(os.path.join(finetune_save_dir, arch + '_model.pt')))
+            classifier.load_state_dict(torch.load(os.path.join(finetune_save_dir, arch + '_classifier.pt')))
             test_loss, test_acc, test_auc, test_prc, emb_test, label_test, performance = model_test(model, test_dl, config, device, training_mode,
                                                              classifier=classifier, classifier_optimizer=classifier_optimizer)
             performance_list.append(performance)
@@ -108,10 +109,8 @@ def model_pretrain(model, model_optimizer, criterion, train_loader, config, devi
     model.train()
     global loss, loss_t, loss_f, l_TF, loss_c, data_test, data_f_test
 
-    # optimizer
-    model_optimizer.zero_grad()
-
     for batch_idx, (data, labels, aug1, data_f, aug1_f) in enumerate(train_loader):
+        model_optimizer.zero_grad()
         data, labels = data.float().to(device), labels.long().to(device) # data: [128, 1, 178], labels: [128]
         aug1 = aug1.float().to(device)  # aug1 = aug2 : [128, 1, 178]
         data_f, aug1_f = data_f.float().to(device), aug1_f.float().to(device)  # aug1 = aug2 : [128, 1, 178]
