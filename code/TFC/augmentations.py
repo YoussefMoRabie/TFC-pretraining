@@ -58,16 +58,14 @@ def DataTransform_FD(sample, config):
     return aug_F
 
 def remove_frequency(x, pertub_ratio=0.0):
-    mask = torch.cuda.FloatTensor(x.shape).uniform_() > pertub_ratio # maskout_ratio are False
-    mask = mask.to(x.device)
+    mask = torch.rand(x.shape, device=x.device) > pertub_ratio # maskout_ratio are False
     return x*mask
 
 def add_frequency(x, pertub_ratio=0.0):
 
-    mask = torch.cuda.FloatTensor(x.shape).uniform_() > (1-pertub_ratio) # only pertub_ratio of all values are True
-    mask = mask.to(x.device)
+    mask = torch.rand(x.shape, device=x.device) > (1-pertub_ratio) # only pertub_ratio of all values are True
     max_amplitude = x.max()
-    random_am = torch.rand(mask.shape)*(max_amplitude*0.1)
+    random_am = torch.rand(mask.shape, device=x.device)*(max_amplitude*0.1)
     pertub_matrix = mask*random_am
     return x+pertub_matrix
 

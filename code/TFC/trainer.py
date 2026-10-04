@@ -202,7 +202,7 @@ def model_finetune(model, model_optimizer, val_dl, config, device, training_mode
         try:
             auc_bs = roc_auc_score(onehot_label.detach().cpu().numpy(), pred_numpy, average="macro", multi_class="ovr" )
         except:
-            auc_bs = np.float(0)
+            auc_bs = float(0)
         prc_bs = average_precision_score(onehot_label.detach().cpu().numpy(), pred_numpy)
 
         total_acc.append(acc_bs)
@@ -273,7 +273,7 @@ def model_test(model,  test_dl, config,  device, training_mode, classifier=None,
                 auc_bs = roc_auc_score(onehot_label.detach().cpu().numpy(), pred_numpy,
                                    average="macro", multi_class="ovr")
             except:
-                auc_bs = np.float(0)
+                auc_bs = float(0)
             prc_bs = average_precision_score(onehot_label.detach().cpu().numpy(), pred_numpy, average="macro")
             pred_numpy = np.argmax(pred_numpy, axis=1)
 
